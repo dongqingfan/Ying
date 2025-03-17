@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日程详情 - AI日程管理小助理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="screen">
+            <div class="status-bar">
+                <span>9:41</span>
+                <div>
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-signal"></i>
+                    <i class="fas fa-battery-full"></i>
+                </div>
+            </div>
+            <div class="header">
+                <a href="calendar.html" class="back-button"><i class="fas fa-arrow-left"></i></a>
+                <h1>日程详情</h1>
+                <i class="fas fa-ellipsis-v"></i>
+            </div>
+            <div class="content">
+                <div class="card">
+                    <h2>与客户共进午餐</h2>
+                    <div style="margin: 15px 0;">
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <i class="far fa-clock" style="width: 20px;"></i>
+                            <span style="margin-left: 10px;">2023年10月16日 12:00-13:30</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <i class="fas fa-map-marker-alt" style="width: 20px;"></i>
+                            <span style="margin-left: 10px;">海底捞火锅(国贸店)</span>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-user" style="width: 20px;"></i>
+                            <span style="margin-left: 10px;">李总、王经理</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 14px; color: var(--light-text);">
+                        讨论新项目合作事宜，准备项目提案和报价单。
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3><i class="fas fa-cloud-sun"></i> 目的地天气分析</h3>
+                    <div style="margin-top: 10px;">
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-cloud-showers-heavy" style="font-size: 40px; color: #4a6bff;"></i>
+                            <div style="margin-left: 15px;">
+                                <h2>18°C</h2>
+                                <p>中雨</p>
+                            </div>
+                        </div>
+                        
+                        <div class="weather-detail">
+                            <div class="weather-item">
+                                <div class="weather-item-value">85%</div>
+                                <div class="weather-item-label">湿度</div>
+                            </div>
+                            <div class="weather-item">
+                                <div class="weather-item-value">15km/h</div>
+                                <div class="weather-item-label">风速</div>
+                            </div>
+                            <div class="weather-item">
+                                <div class="weather-item-value">8°C</div>
+                                <div class="weather-item-label">温差</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card suggestion-card">
+                    <h3><i class="fas fa-lightbulb"></i> 智能建议</h3>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>目的地有中雨，请携带雨伞</li>
+                        <li>温度较低，建议穿着长袖外套</li>
+                        <li>交通可能拥堵，建议提前15分钟出发</li>
+                        <li>国贸地区停车位紧张，可考虑打车或公共交通</li>
+                    </ul>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <a href="add-schedule.html" class="btn" style="flex: 1;">
+                        <i class="fas fa-edit"></i> 编辑
+                    </a>
+                    <button class="btn" style="flex: 1; background-color: var(--danger-color);">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </div>
+            </div>
+            <div class="nav-bar">
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>首页</span>
+                </a>
+                <a href="calendar.html" class="nav-item active">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>日程</span>
+                </a>
+                <a href="weather.html" class="nav-item">
+                    <i class="fas fa-cloud-sun"></i>
+                    <span>天气</span>
+                </a>
+                <a href="settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>设置</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html> 

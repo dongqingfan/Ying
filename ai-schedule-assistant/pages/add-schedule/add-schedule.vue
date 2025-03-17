@@ -1,0 +1,487 @@
+<template>
+	<view class="container">
+		<!-- 固定在顶部的状态栏和标题栏 -->
+		<view class="fixed-top">
+			<view class="status-bar">
+				<view style="visibility: hidden;">时间占位</view>
+				<view>
+					<text class="icon iconfont icon-wifi"></text>
+					<text class="icon iconfont icon-signal"></text>
+					<text class="icon iconfont icon-battery-full"></text>
+				</view>
+			</view>
+			
+			<view class="header">
+				<view class="back-button" @tap="goBack">
+					<text class="iconfont icon-back"></text>
+				</view>
+				<text style="font-size: 40rpx; font-weight: bold;">{{ isEditMode ? '编辑日程' : '添加日程' }}</text>
+				<text style="color: var(--primary-color); font-weight: 500;" @tap="saveSchedule">保存</text>
+			</view>
+		</view>
+		
+		<!-- 内容区域，添加顶部padding以避免被固定头部遮挡 -->
+		<view class="content">
+			<view class="card" style="margin-bottom: 20rpx; padding: 30rpx;">
+				<view v-if="showImagePreview" style="margin-bottom: 30rpx;">
+					<image :src="uploadedImageUrl" style="max-width: 100%; max-height: 400rpx; border-radius: 16rpx;"></image>
+					<view style="margin-top: 20rpx; color: var(--success-color);">
+						<text class="iconfont icon-check-circle"></text> 识别成功，已自动填写日程信息
+					</view>
+				</view>
+				
+				<view class="form-group" style="margin-bottom: 20rpx;">
+					<label class="form-label">粘贴日程信息</label>
+					<textarea v-model="scheduleText" class="form-input textarea" style="height: 200rpx;" placeholder="在此粘贴日程信息文本，如会议邀请、邮件内容等"></textarea>
+				</view>
+				
+				<view style="display: flex; gap: 20rpx;">
+					<button class="btn" @tap="recognizeText" style="flex: 1;">
+						<text class="iconfont icon-magic"></text> 自动识别填写
+					</button>
+					<button class="btn" @tap="chooseImage" style="flex: 1; background-color: var(--secondary-color); color: var(--primary-color);">
+						<text class="iconfont icon-image"></text> 上传图片识别
+					</button>
+				</view>
+			</view>
+			
+			<view class="form-group">
+				<label class="form-label">日程标题</label>
+				<input type="text" v-model="schedule.title" class="form-input input-field" placeholder="输入日程标题" />
+			</view>
+			
+			<view class="form-group">
+				<label class="form-label">日期</label>
+				<picker mode="date" :value="schedule.date" @change="onDateChange" class="form-input date-picker">
+					<view class="picker-value">{{ formatDate(schedule.date) }}</view>
+				</picker>
+			</view>
+			
+			<view style="display: flex; gap: 20rpx;">
+				<view class="form-group" style="flex: 1;">
+					<label class="form-label">开始时间</label>
+					<picker mode="time" :value="schedule.startTime" @change="onStartTimeChange" class="form-input time-picker">
+						<view class="picker-value">{{ schedule.startTime }}</view>
+					</picker>
+				</view>
+				<view class="form-group" style="flex: 1;">
+					<label class="form-label">结束时间</label>
+					<picker mode="time" :value="schedule.endTime" @change="onEndTimeChange" class="form-input time-picker">
+						<view class="picker-value">{{ schedule.endTime }}</view>
+					</picker>
+				</view>
+			</view>
+			
+			<view class="form-group">
+				<label class="form-label">地点</label>
+				<input type="text" v-model="schedule.location" class="form-input input-field" placeholder="输入地点" />
+			</view>
+			
+			<view class="form-group">
+				<label class="form-label">参与人</label>
+				<input type="text" v-model="schedule.participants" class="form-input input-field" placeholder="输入参与人" />
+			</view>
+			
+			<view class="form-group">
+				<label class="form-label">备注</label>
+				<textarea v-model="schedule.notes" class="form-input textarea" style="height: 160rpx;" placeholder="输入备注信息"></textarea>
+			</view>
+			
+			<view class="form-group">
+				<label class="form-label">天气分析</label>
+				<view style="display: flex; align-items: center;">
+					<switch :checked="schedule.weatherAnalysis" @change="toggleWeatherAnalysis" color="var(--primary-color)" />
+					<text style="margin-left: 20rpx; font-size: 28rpx;">启用目的地天气分析</text>
+				</view>
+			</view>
+			
+			<button class="btn" @tap="saveSchedule" style="width: 100%; margin-top: 20rpx; margin-bottom: 120rpx;">
+				<text class="iconfont icon-save"></text> 保存日程
+			</button>
+		</view>
+	</view>
+</template>
+
+<script>
+	import { mapActions } from 'vuex'
+	
+	export default {
+		data() {
+			const now = new Date()
+			const currentYear = now.getFullYear()
+			const currentMonth = now.getMonth()
+			const currentDay = now.getDate()
+			
+			// 设置默认日程信息
+			const defaultDate = this.formatDateString(now)
+			const defaultStartHour = now.getHours().toString().padStart(2, '0')
+			const defaultStartMinute = (Math.ceil(now.getMinutes() / 15) * 15 % 60).toString().padStart(2, '0')
+			
+			let defaultEndTime = new Date(now)
+			defaultEndTime.setHours(now.getHours() + 1)
+			defaultEndTime.setMinutes(Math.ceil(now.getMinutes() / 15) * 15 % 60)
+			const defaultEndHour = defaultEndTime.getHours().toString().padStart(2, '0')
+			const defaultEndMinute = defaultEndTime.getMinutes().toString().padStart(2, '0')
+			
+			return {
+				scheduleText: '',
+				uploadedImageUrl: '',
+				showImagePreview: false,
+				isEditMode: false, // 是否是编辑模式
+				scheduleId: '', // 编辑中的日程ID
+				
+				// 日程信息
+				schedule: {
+					title: '',
+					date: defaultDate,
+					startTime: `${defaultStartHour}:${defaultStartMinute}`,
+					endTime: `${defaultEndHour}:${defaultEndMinute}`,
+					location: '',
+					participants: '',
+					notes: '',
+					weatherAnalysis: true
+				}
+			}
+		},
+		onLoad(options) {
+			// 如果有传递日期参数，更新日程日期
+			if (options.date) {
+				this.schedule.date = options.date
+			}
+			
+			// 如果是编辑模式，加载现有日程信息
+			if (options.id && options.edit === 'true') {
+				// 获取要编辑的日程
+				const scheduleToEdit = this.$store.getters.scheduleById(options.id)
+				
+				if (scheduleToEdit) {
+					// 设置为编辑模式
+					this.isEditMode = true
+					this.scheduleId = options.id
+					
+					// 复制日程数据到表单
+					this.schedule = { ...scheduleToEdit }
+				}
+			}
+		},
+		methods: {
+			...mapActions(['addNewSchedule', 'updateExistingSchedule']),
+			
+			// 返回上一页
+			goBack() {
+				uni.navigateBack()
+			},
+			
+			// 保存日程
+			saveSchedule() {
+				// 表单验证
+				if (!this.schedule.title) {
+					uni.showToast({
+						title: '请输入日程标题',
+						icon: 'none'
+					})
+					return
+				}
+				
+				if (!this.schedule.date) {
+					uni.showToast({
+						title: '请选择日期',
+						icon: 'none'
+					})
+					return
+				}
+				
+				// 根据是否是编辑模式选择操作
+				if (this.isEditMode) {
+					// 调用 vuex action 更新日程
+					this.updateExistingSchedule(this.schedule)
+					
+					// 提示保存成功
+					uni.showToast({
+						title: '日程更新成功',
+						icon: 'success',
+						duration: 2000,
+						success: () => {
+							// 延迟返回，让用户看到提示
+							setTimeout(() => {
+								uni.navigateBack()
+							}, 2000)
+						}
+					})
+				} else {
+					// 调用 vuex action 添加日程
+					this.addNewSchedule(this.schedule)
+					
+					// 提示保存成功
+					uni.showToast({
+						title: '日程保存成功',
+						icon: 'success',
+						duration: 2000,
+						success: () => {
+							// 延迟返回，让用户看到提示
+							setTimeout(() => {
+								uni.navigateBack()
+							}, 2000)
+						}
+					})
+				}
+			},
+			
+			// 自动识别文本
+			recognizeText() {
+				if (!this.scheduleText) {
+					uni.showToast({
+						title: '请先输入日程信息文本',
+						icon: 'none'
+					})
+					return
+				}
+				
+				// 显示加载提示
+				uni.showLoading({
+					title: '识别中...'
+				})
+				
+				// 模拟识别过程（实际应用中可调用AI接口）
+				setTimeout(() => {
+					// 模拟识别结果
+					const recognizedInfo = {
+						title: '产品团队周会',
+						date: this.formatDateString(new Date()),
+						startTime: '09:30',
+						endTime: '11:00',
+						location: '公司会议室A',
+						participants: '产品部全体成员',
+						notes: '讨论新功能开发计划和进度'
+					}
+					
+					// 更新表单数据
+					this.schedule = {
+						...this.schedule,
+						...recognizedInfo
+					}
+					
+					// 隐藏加载提示
+					uni.hideLoading()
+					
+					// 显示成功提示
+					uni.showToast({
+						title: '识别成功',
+						icon: 'success'
+					})
+				}, 1500)
+			},
+			
+			// 选择图片
+			chooseImage() {
+				uni.chooseImage({
+					count: 1,
+					success: (res) => {
+						const tempFilePath = res.tempFilePaths[0]
+						this.uploadedImageUrl = tempFilePath
+						this.showImagePreview = true
+						
+						// 显示加载提示
+						uni.showLoading({
+							title: '识别中...'
+						})
+						
+						// 模拟图像识别过程（实际应用中可调用AI接口）
+						setTimeout(() => {
+							// 模拟识别结果
+							const recognizedInfo = {
+								title: '与客户会面讨论项目进展',
+								date: this.formatDateString(new Date()),
+								startTime: '14:00',
+								endTime: '15:30',
+								location: '星巴克咖啡(国贸店)',
+								participants: '李总、王经理',
+								notes: '准备项目进度报告和演示文稿'
+							}
+							
+							// 更新表单数据
+							this.schedule = {
+								...this.schedule,
+								...recognizedInfo
+							}
+							
+							// 隐藏加载提示
+							uni.hideLoading()
+							
+							// 显示成功提示
+							uni.showToast({
+								title: '识别成功',
+								icon: 'success'
+							})
+						}, 2000)
+					}
+				})
+			},
+			
+			// 切换天气分析开关
+			toggleWeatherAnalysis(e) {
+				this.schedule.weatherAnalysis = e.detail.value
+			},
+			
+			// 日期选择器变化处理
+			onDateChange(e) {
+				this.schedule.date = e.detail.value
+			},
+			
+			// 开始时间选择器变化处理
+			onStartTimeChange(e) {
+				this.schedule.startTime = e.detail.value
+			},
+			
+			// 结束时间选择器变化处理
+			onEndTimeChange(e) {
+				this.schedule.endTime = e.detail.value
+			},
+			
+			// 格式化日期为字符串 (YYYY-MM-DD)
+			formatDateString(date) {
+				const year = date.getFullYear()
+				const month = (date.getMonth() + 1).toString().padStart(2, '0')
+				const day = date.getDate().toString().padStart(2, '0')
+				return `${year}-${month}-${day}`
+			},
+			
+			// 格式化日期显示 (YYYY年MM月DD日)
+			formatDate(dateString) {
+				if (!dateString) return '请选择日期'
+				
+				const date = new Date(dateString)
+				const year = date.getFullYear()
+				const month = date.getMonth() + 1
+				const day = date.getDate()
+				return `${year}年${month}月${day}日`
+			}
+		}
+	}
+</script>
+
+<style>
+	.container {
+		position: relative;
+		min-height: 100vh;
+		background-color: var(--bg-color);
+	}
+	
+	/* 固定顶部区域样式 */
+	.fixed-top {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		background-color: #fff;
+		z-index: 999;
+		box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+	}
+	
+	/* 内容区域增加顶部padding以避免被固定头部遮挡 */
+	.content {
+		padding: 30rpx;
+		padding-top: 180rpx; /* 调整此值确保内容不被顶部固定区域遮挡 */
+		padding-bottom: 150rpx; /* 确保底部内容不被tabBar遮挡 */
+		box-sizing: border-box;
+		min-height: 100vh; /* 确保内容区域至少填满整个视口高度 */
+	}
+	
+	/* 修复表单输入框样式 */
+	.form-input {
+		width: 100%;
+		padding: 20rpx;
+		border: 2rpx solid var(--border-color);
+		border-radius: 8rpx;
+		background-color: #ffffff;
+		font-size: 32rpx;
+		box-sizing: border-box; /* 确保padding和border计入宽度 */
+	}
+	
+	/* 统一输入框高度 */
+	.input-field {
+		height: 80rpx;
+		line-height: 40rpx;
+	}
+	
+	/* 文本域样式 */
+	.textarea {
+		width: 100%;
+		box-sizing: border-box;
+		line-height: 1.4;
+	}
+	
+	/* 确保卡片内的内容不溢出 */
+	.card {
+		overflow: hidden; /* 防止内容溢出 */
+		width: 100%;
+		box-sizing: border-box;
+	}
+	
+	.form-group {
+		width: 100%;
+		box-sizing: border-box;
+		margin-bottom: 30rpx;
+	}
+	
+	.iconfont {
+		font-family: "iconfont" !important;
+		font-size: 28rpx;
+		font-style: normal;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+	
+	.date-picker, .time-picker {
+		display: flex;
+		align-items: center;
+		height: 80rpx;
+	}
+	
+	.picker-value {
+		width: 100%;
+	}
+	
+	.back-button {
+		font-size: 40rpx;
+		line-height: 1;
+		padding: 10rpx;
+	}
+	
+	@font-face {
+		font-family: 'iconfont';
+		src: url('https://at.alicdn.com/t/font_2211295_iu6ju9j65x.ttf') format('truetype');
+	}
+	
+	.icon-back:before {
+		content: '\e6c8';
+	}
+	
+	.icon-magic:before {
+		content: '\e615';
+	}
+	
+	.icon-image:before {
+		content: '\e6f3';
+	}
+	
+	.icon-save:before {
+		content: '\e649';
+	}
+	
+	.icon-check-circle:before {
+		content: '\e64d';
+	}
+	
+	.icon-wifi:before {
+		content: '\e6cf';
+	}
+	
+	.icon-signal:before {
+		content: '\e6c5';
+	}
+	
+	.icon-battery-full:before {
+		content: '\e60d';
+	}
+</style> 

@@ -1,17 +1,72 @@
 {
-	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+	"pages": [
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "uni-app"
+				"navigationBarTitleText": "AI日程管理小助理",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/calendar/calendar",
+			"style": {
+				"navigationBarTitleText": "日历",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/add-schedule/add-schedule",
+			"style": {
+				"navigationBarTitleText": "添加日程",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/schedule-detail/schedule-detail",
+			"style": {
+				"navigationBarTitleText": "日程详情",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/settings/settings",
+			"style": {
+				"navigationBarTitleText": "设置",
+				"navigationStyle": "custom"
 			}
 		}
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "uni-app",
+		"navigationBarTitleText": "AI日程管理小助理",
 		"navigationBarBackgroundColor": "#F8F8F8",
 		"backgroundColor": "#F8F8F8"
+	},
+	"tabBar": {
+		"color": "#8a8a8a",
+		"selectedColor": "#4169E1",
+		"backgroundColor": "#ffffff",
+		"borderStyle": "black",
+		"list": [
+			{
+				"pagePath": "pages/index/index",
+				"text": "首页",
+				"iconPath": "static/icons/home.png",
+				"selectedIconPath": "static/icons/home-active.png"
+			},
+			{
+				"pagePath": "pages/calendar/calendar",
+				"text": "日历",
+				"iconPath": "static/icons/calendar.png",
+				"selectedIconPath": "static/icons/calendar-active.png"
+			},
+			{
+				"pagePath": "pages/settings/settings",
+				"text": "设置",
+				"iconPath": "static/icons/settings.png",
+				"selectedIconPath": "static/icons/settings-active.png"
+			}
+		]
 	},
 	"uniIdRouter": {}
 }

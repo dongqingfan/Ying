@@ -1,0 +1,86 @@
+
+.settings-section {
+		margin-bottom: 0.9375rem;
+}
+.settings-section-title {
+		font-size: 0.875rem;
+		color: var(--light-text);
+		margin-bottom: 0.3125rem;
+		padding: 0 0.625rem;
+}
+.settings-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.9375rem 0.625rem;
+		background-color: #ffffff;
+		border-bottom: 0.03125rem solid var(--border-color);
+}
+.settings-item:last-child {
+		border-bottom: none;
+}
+.settings-item-left {
+		display: flex;
+		align-items: center;
+}
+.settings-item-left .icon {
+		margin-right: 0.625rem;
+		font-size: 1.25rem;
+		color: var(--primary-color);
+}
+.settings-item-right {
+		display: flex;
+		align-items: center;
+		color: var(--light-text);
+}
+.settings-item-right .icon {
+		margin-left: 0.3125rem;
+}
+.settings-item.danger .icon {
+		color: var(--error-color);
+}
+.reminder-option {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.9375rem 0.625rem;
+		border-bottom: 0.03125rem solid var(--border-color);
+}
+.reminder-option:last-child {
+		border-bottom: none;
+}
+	
+	/* 图标样式 */
+.icon-theme:before {
+		content: '\e6a0';
+}
+.icon-notification:before {
+		content: '\e6a1';
+}
+.icon-weather:before {
+		content: '\e6a2';
+}
+.icon-location:before {
+		content: '\e650';
+}
+.icon-export:before {
+		content: '\e6a3';
+}
+.icon-import:before {
+		content: '\e6a4';
+}
+.icon-delete:before {
+		content: '\e6c4';
+}
+.icon-info:before {
+		content: '\e6a5';
+}
+.icon-feedback:before {
+		content: '\e6a6';
+}
+.icon-right:before {
+		content: '\e6cb';
+}
+.icon-close:before {
+		content: '\e6c2';
+}

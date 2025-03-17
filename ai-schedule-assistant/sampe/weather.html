@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天气 - AI日程管理小助理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="screen">
+            <div class="status-bar">
+                <span>9:41</span>
+                <div>
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-signal"></i>
+                    <i class="fas fa-battery-full"></i>
+                </div>
+            </div>
+            <div class="header">
+                <h1>天气分析</h1>
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="content">
+                <div class="form-group">
+                    <label class="form-label">选择地点</label>
+                    <div style="position: relative;">
+                        <input type="text" class="form-input" placeholder="搜索地点" value="北京市朝阳区国贸">
+                        <i class="fas fa-map-marker-alt" style="position: absolute; right: 12px; top: 12px; color: var(--light-text);"></i>
+                    </div>
+                </div>
+                
+                <div class="card" style="background-color: var(--secondary-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h2>北京市朝阳区</h2>
+                            <p>今日 10月16日 星期一</p>
+                        </div>
+                        <i class="fas fa-cloud-showers-heavy" style="font-size: 40px; color: var(--primary-color);"></i>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                        <div>
+                            <h1 style="font-size: 36px;">18°C</h1>
+                            <p>中雨</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p>最高 21°C</p>
+                            <p>最低 13°C</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>24小时预报</h3>
+                    <div style="display: flex; overflow-x: auto; margin-top: 10px; padding-bottom: 5px;">
+                        <div style="min-width: 60px; text-align: center; margin-right: 15px;">
+                            <div>现在</div>
+                            <i class="fas fa-cloud-showers-heavy" style="font-size: 24px; margin: 8px 0; color: var(--primary-color);"></i>
+                            <div>18°C</div>
+                        </div>
+                        <div style="min-width: 60px; text-align: center; margin-right: 15px;">
+                            <div>11:00</div>
+                            <i class="fas fa-cloud-showers-heavy" style="font-size: 24px; margin: 8px 0; color: var(--primary-color);"></i>
+                            <div>19°C</div>
+                        </div>
+                        <div style="min-width: 60px; text-align: center; margin-right: 15px;">
+                            <div>12:00</div>
+                            <i class="fas fa-cloud-rain" style="font-size: 24px; margin: 8px 0; color: var(--primary-color);"></i>
+                            <div>19°C</div>
+                        </div>
+                        <div style="min-width: 60px; text-align: center; margin-right: 15px;">
+                            <div>13:00</div>
+                            <i class="fas fa-cloud-rain" style="font-size: 24px; margin: 8px 0; color: var(--primary-color);"></i>
+                            <div>20°C</div>
+                        </div>
+                        <div style="min-width: 60px; text-align: center; margin-right: 15px;">
+                            <div>14:00</div>
+                            <i class="fas fa-cloud" style="font-size: 24px; margin: 8px 0; color: var(--primary-color);"></i>
+                            <div>21°C</div>
+                        </div>
+                        <div style="min-width: 60px; text-align: center; margin-right: 15px;">
+                            <div>15:00</div>
+                            <i class="fas fa-cloud" style="font-size: 24px; margin: 8px 0; color: var(--primary-color);"></i>
+                            <div>21°C</div>
+                        </div>
+                        <div style="min-width: 60px; text-align: center;">
+                            <div>16:00</div>
+                            <i class="fas fa-cloud-sun" style="font-size: 24px; margin: 8px 0; color: var(--primary-color);"></i>
+                            <div>20°C</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>详细信息</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-temperature-high" style="width: 30px; color: var(--primary-color);"></i>
+                            <div>
+                                <div style="font-size: 12px; color: var(--light-text);">体感温度</div>
+                                <div>16°C</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-tint" style="width: 30px; color: var(--primary-color);"></i>
+                            <div>
+                                <div style="font-size: 12px; color: var(--light-text);">湿度</div>
+                                <div>85%</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-wind" style="width: 30px; color: var(--primary-color);"></i>
+                            <div>
+                                <div style="font-size: 12px; color: var(--light-text);">风速</div>
+                                <div>15 km/h</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-compass" style="width: 30px; color: var(--primary-color);"></i>
+                            <div>
+                                <div style="font-size: 12px; color: var(--light-text);">风向</div>
+                                <div>东北风</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-eye" style="width: 30px; color: var(--primary-color);"></i>
+                            <div>
+                                <div style="font-size: 12px; color: var(--light-text);">能见度</div>
+                                <div>5 km</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-sun" style="width: 30px; color: var(--primary-color);"></i>
+                            <div>
+                                <div style="font-size: 12px; color: var(--light-text);">紫外线指数</div>
+                                <div>低</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card suggestion-card">
+                    <h3><i class="fas fa-lightbulb"></i> 出行建议</h3>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>今日有中雨，出门请携带雨伞</li>
+                        <li>温度较低，建议穿着长袖外套</li>
+                        <li>雨天路滑，驾车请注意安全</li>
+                        <li>空气湿度大，注意保持物品干燥</li>
+                    </ul>
+                </div>
+                
+                <div class="card" style="margin-top: 20px;">
+                    <h3>未来7天预报</h3>
+                    <div style="margin-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="width: 80px;">今天</div>
+                            <i class="fas fa-cloud-showers-heavy" style="color: var(--primary-color);"></i>
+                            <div style="text-align: right;">13°C / 21°C</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="width: 80px;">周二</div>
+                            <i class="fas fa-cloud" style="color: var(--primary-color);"></i>
+                            <div style="text-align: right;">14°C / 22°C</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="width: 80px;">周三</div>
+                            <i class="fas fa-cloud-sun" style="color: var(--primary-color);"></i>
+                            <div style="text-align: right;">15°C / 24°C</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="width: 80px;">周四</div>
+                            <i class="fas fa-sun" style="color: var(--primary-color);"></i>
+                            <div style="text-align: right;">16°C / 25°C</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="width: 80px;">周五</div>
+                            <i class="fas fa-sun" style="color: var(--primary-color);"></i>
+                            <div style="text-align: right;">17°C / 26°C</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="width: 80px;">周六</div>
+                            <i class="fas fa-cloud-sun" style="color: var(--primary-color);"></i>
+                            <div style="text-align: right;">16°C / 25°C</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                            <div style="width: 80px;">周日</div>
+                            <i class="fas fa-cloud" style="color: var(--primary-color);"></i>
+                            <div style="text-align: right;">15°C / 23°C</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-bar">
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>首页</span>
+                </a>
+                <a href="calendar.html" class="nav-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>日程</span>
+                </a>
+                <a href="weather.html" class="nav-item active">
+                    <i class="fas fa-cloud-sun"></i>
+                    <span>天气</span>
+                </a>
+                <a href="settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>设置</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html> 

@@ -1,23 +1,42 @@
 
-.content {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
+.container {
+		position: relative;
+		min-height: 100vh;
+		background-color: var(--bg-color);
 }
-.logo {
-		height: 6.25rem;
-		width: 6.25rem;
-		margin-top: 6.25rem;
-		margin-left: auto;
-		margin-right: auto;
-		margin-bottom: 1.5625rem;
+.empty-tip {
+		text-align: center;
+		padding: 1.25rem 0;
+		color: var(--light-text);
 }
-.text-area {
-		display: flex;
-		justify-content: center;
+	
+	/* 引入字体图标 (可替换为实际的iconfont) */
+@font-face {
+		font-family: 'iconfont';
+		src: url('https://at.alicdn.com/t/font_2211295_iu6ju9j65x.ttf') format('truetype');
 }
-.title {
-		font-size: 1.125rem;
-		color: #8f8f94;
+.icon {
+		font-family: 'iconfont';
+		font-style: normal;
+}
+.icon-wifi:before {
+		content: '\e6cf';
+}
+.icon-signal:before {
+		content: '\e6c5';
+}
+.icon-battery-full:before {
+		content: '\e60d';
+}
+.icon-search:before {
+		content: '\e623';
+}
+.icon-location:before {
+		content: '\e650';
+}
+.icon-warning:before {
+		content: '\e64e';
+}
+.icon-add:before {
+		content: '\e61a';
 }
