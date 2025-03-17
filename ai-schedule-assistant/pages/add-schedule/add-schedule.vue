@@ -229,6 +229,13 @@
 			
 			// 自动识别文本
 			recognizeText() {
+				uniCloud.callFunction({
+					name:"helloword",
+					data:null
+				}).then(res=>{
+					console.log(res);
+				});
+				
 				if (!this.scheduleText) {
 					uni.showToast({
 						title: '请先输入日程信息文本',
@@ -242,34 +249,94 @@
 					title: '识别中...'
 				})
 				
-				// 模拟识别过程（实际应用中可调用AI接口）
-				setTimeout(() => {
-					// 模拟识别结果
-					const recognizedInfo = {
-						title: '产品团队周会',
-						date: this.formatDateString(new Date()),
-						startTime: '09:30',
-						endTime: '11:00',
-						location: '公司会议室A',
-						participants: '产品部全体成员',
-						notes: '讨论新功能开发计划和进度'
+				// 调用云函数进行识别
+				uniCloud.callFunction({
+					name: 'identifyString',
+					data: {
+						text: this.scheduleText
 					}
-					
-					// 更新表单数据
-					this.schedule = {
-						...this.schedule,
-						...recognizedInfo
-					}
-					
+				}).then(res => {
 					// 隐藏加载提示
 					uni.hideLoading()
 					
-					// 显示成功提示
+					const result = res.result
+					if (result.code === 0 && result.data) {
+						// 提取识别结果
+						const scheduleData = result.data
+						
+						// 准备填充到表单的数据
+						let recognizedInfo = {}
+						
+						// 提取标题
+						if (scheduleData.title || scheduleData.subject || scheduleData.name) {
+							recognizedInfo.title = scheduleData.title || scheduleData.subject || scheduleData.name
+						}
+						
+						// 提取日期并格式化
+						if (scheduleData.date) {
+							try {
+								const dateObj = new Date(scheduleData.date)
+								if (!isNaN(dateObj.getTime())) {
+									recognizedInfo.date = this.formatDateString(dateObj)
+								}
+							} catch (e) {
+								console.error('日期格式转换错误:', e)
+							}
+						}
+						
+						// 提取时间
+						if (scheduleData.startTime) {
+							recognizedInfo.startTime = this.formatTimeString(scheduleData.startTime)
+						}
+						
+						if (scheduleData.endTime) {
+							recognizedInfo.endTime = this.formatTimeString(scheduleData.endTime)
+						}
+						
+						// 提取地点
+						if (scheduleData.location || scheduleData.place || scheduleData.venue) {
+							recognizedInfo.location = scheduleData.location || scheduleData.place || scheduleData.venue
+						}
+						
+						// 提取参与人
+						if (scheduleData.participants || scheduleData.attendees || scheduleData.people) {
+							recognizedInfo.participants = scheduleData.participants || scheduleData.attendees || scheduleData.people
+						}
+						
+						// 提取备注
+						if (scheduleData.notes || scheduleData.description || scheduleData.content) {
+							recognizedInfo.notes = scheduleData.notes || scheduleData.description || scheduleData.content
+						}
+						
+						// 更新表单数据
+						this.schedule = {
+							...this.schedule,
+							...recognizedInfo
+						}
+						
+						// 显示成功提示
+						uni.showToast({
+							title: '识别成功',
+							icon: 'success'
+						})
+					} else {
+						// 处理错误情况
+						uni.showToast({
+							title: result.message || '识别失败',
+							icon: 'none'
+						})
+					}
+				}).catch(err => {
+					// 隐藏加载提示
+					uni.hideLoading()
+					
+					// 显示错误提示
 					uni.showToast({
-						title: '识别成功',
-						icon: 'success'
+						title: '识别失败: ' + (err.message || '未知错误'),
+						icon: 'none'
 					})
-				}, 1500)
+					console.error('AI识别错误:', err)
+				})
 			},
 			
 			// 选择图片
@@ -355,6 +422,40 @@
 				const month = date.getMonth() + 1
 				const day = date.getDate()
 				return `${year}年${month}月${day}日`
+			},
+			
+			// 添加时间格式化辅助方法
+			formatTimeString(timeStr) {
+				// 处理常见的时间格式，统一为HH:MM
+				if (!timeStr) return ''
+				
+				// 尝试提取小时和分钟
+				let hours, minutes
+				
+				// 尝试匹配 "HH:MM" 或 "HH:MM:SS" 格式
+				const timeRegex = /(\d{1,2}):(\d{1,2})(?::\d{1,2})?/
+				const match = timeStr.match(timeRegex)
+				
+				if (match) {
+					hours = match[1].padStart(2, '0')
+					minutes = match[2].padStart(2, '0')
+					return `${hours}:${minutes}`
+				}
+				
+				// 尝试解析其他时间表示
+				try {
+					const date = new Date(timeStr)
+					if (!isNaN(date.getTime())) {
+						hours = date.getHours().toString().padStart(2, '0')
+						minutes = date.getMinutes().toString().padStart(2, '0')
+						return `${hours}:${minutes}`
+					}
+				} catch (e) {
+					console.error('时间格式解析错误:', e)
+				}
+				
+				// 如果无法解析，返回原始字符串
+				return timeStr
 			}
 		}
 	}

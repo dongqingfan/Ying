@@ -10,7 +10,7 @@
 		</view>
 		
 		<view class="header">
-			<text style="font-size: 40rpx; font-weight: bold;">{{ currentCity }}</text>
+			<text style="font-size: 40rpx; font-weight: bold;display: none;">{{ currentCity }}</text>
 			<text class="icon iconfont icon-search" style="font-size: 40rpx;"></text>
 		</view>
 		

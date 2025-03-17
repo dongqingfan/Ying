@@ -44,7 +44,7 @@
 			</view>
 			
 			<!-- 天气信息 -->
-			<view class="detail-card" v-if="schedule.weatherAnalysis && weatherInfo">
+			<view class="detail-card" v-if="schedule.weatherAnalysis && weatherInfo && false">
 				<view class="detail-section-title">天气信息</view>
 				<view class="weather-info">
 					<view class="weather-main">

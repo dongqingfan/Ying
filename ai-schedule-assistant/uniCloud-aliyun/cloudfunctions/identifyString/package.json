@@ -1,0 +1,7 @@
+{
+  "name": "identifyString",
+  "dependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}
