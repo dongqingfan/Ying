@@ -6,7 +6,7 @@ const axios = require('axios'); // 需要在云函数package.json中添加axios�
 exports.main = async (event, context) => {
 	try {
 		// 1. 从数据库获取AI Token
-		const tokenRecord = await db.collection('ai_tokens').limit(1).get();
+		const tokenRecord = await db.collection('settings').limit(1).get();
 		
 		if (!tokenRecord.data || tokenRecord.data.length === 0) {
 			return {
@@ -59,11 +59,23 @@ async function callQwenAPI(token, text) {
 				'Content-Type': 'application/json'
 			},
 			data: {
-				model: 'Qwen/QwQ-32B',
+				model: 'Qwen/Qwen2.5-7B-Instruct',
 				messages: [
 					{
 						role: 'user',
-						content: `分析下面这段文本并将其转换为JSON格式，提取关键信息：\n\n${text}`
+						content: `从以下文本中提取日程相关信息，按照以下格式返回JSON对象:
+{
+  "title": "会议标题或事件名称",
+  "date": "YYYY-MM-DD格式的日期，如果是相对日期如'明天'请保留原文",
+  "startTime": "HH:MM格式的开始时间",
+  "endTime": "HH:MM格式的结束时间，如果没有则不填",
+  "location": "地点信息",
+  "participants": "参与人员",
+  "notes": "备注信息"
+}
+
+文本内容:
+${text}`
 					}
 				],
 				stream: false,
@@ -75,7 +87,7 @@ async function callQwenAPI(token, text) {
 				frequency_penalty: 0.5,
 				n: 1,
 				response_format: {
-					type: "json"
+					type: "json_object"
 				}
 			}
 		});
@@ -85,7 +97,9 @@ async function callQwenAPI(token, text) {
 			try {
 				// 尝试将结果解析为JSON
 				const messageContent = response.data.choices[0].message.content;
+				console.log(messageContent);
 				const jsonData = JSON.parse(messageContent);
+				console.log(jsonData);
 				return jsonData;
 			} catch (e) {
 				// 如果解析失败，直接返回原始文本

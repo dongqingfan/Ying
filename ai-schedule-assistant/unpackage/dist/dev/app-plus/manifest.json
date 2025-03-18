@@ -4,7 +4,7 @@
     "iPhone",
     "iPad"
   ],
-  "id": "",
+  "id": "__UNI__A000033",
   "name": "ai-schedule-assistant",
   "version": {
     "name": "1.0.0",
@@ -152,5 +152,6 @@
       }
     }
   },
+  "locale": "zh-Hans",
   "launch_path": "__uniappview.html"
 }

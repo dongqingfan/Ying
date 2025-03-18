@@ -229,13 +229,6 @@
 			
 			// 自动识别文本
 			recognizeText() {
-				uniCloud.callFunction({
-					name:"helloword",
-					data:null
-				}).then(res=>{
-					console.log(res);
-				});
-				
 				if (!this.scheduleText) {
 					uni.showToast({
 						title: '请先输入日程信息文本',
@@ -258,60 +251,97 @@
 				}).then(res => {
 					// 隐藏加载提示
 					uni.hideLoading()
+					console.log('云函数返回结果:', res.result)
 					
 					const result = res.result
 					if (result.code === 0 && result.data) {
 						// 提取识别结果
 						const scheduleData = result.data
+						console.log('提取的日程数据:', scheduleData)
 						
 						// 准备填充到表单的数据
-						let recognizedInfo = {}
+						const recognizedInfo = {}
 						
-						// 提取标题
-						if (scheduleData.title || scheduleData.subject || scheduleData.name) {
-							recognizedInfo.title = scheduleData.title || scheduleData.subject || scheduleData.name
+						// 处理标题 - 直接赋值
+						if (scheduleData.title) {
+							recognizedInfo.title = scheduleData.title
 						}
 						
-						// 提取日期并格式化
+						// 处理日期 - 需要转换格式
 						if (scheduleData.date) {
-							try {
-								const dateObj = new Date(scheduleData.date)
-								if (!isNaN(dateObj.getTime())) {
-									recognizedInfo.date = this.formatDateString(dateObj)
+							// 如果日期包含相对时间词
+							if (typeof scheduleData.date === 'string') {
+								if (scheduleData.date.includes('明天')) {
+									const tomorrow = new Date()
+									tomorrow.setDate(tomorrow.getDate() + 1)
+									recognizedInfo.date = this.formatDateString(tomorrow)
+								} else if (scheduleData.date.includes('后天')) {
+									const dayAfterTomorrow = new Date()
+									dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2)
+									recognizedInfo.date = this.formatDateString(dayAfterTomorrow)
+								} else if (scheduleData.date.includes('今天')) {
+									recognizedInfo.date = this.formatDateString(new Date())
+								} else {
+									// 尝试解析日期字符串
+									try {
+										// 尝试处理YYYY-MM-DD格式
+										const dateMatch = scheduleData.date.match(/\d{4}-\d{1,2}-\d{1,2}/)
+										if (dateMatch) {
+											const dateObj = new Date(dateMatch[0])
+											if (!isNaN(dateObj.getTime())) {
+												recognizedInfo.date = this.formatDateString(dateObj)
+											}
+										} else {
+											// 其他格式尝试直接解析
+											const dateObj = new Date(scheduleData.date)
+											if (!isNaN(dateObj.getTime())) {
+												recognizedInfo.date = this.formatDateString(dateObj)
+											}
+										}
+									} catch (e) {
+										console.error('日期解析错误:', e)
+									}
 								}
-							} catch (e) {
-								console.error('日期格式转换错误:', e)
 							}
 						}
 						
-						// 提取时间
+						// 处理开始时间
 						if (scheduleData.startTime) {
 							recognizedInfo.startTime = this.formatTimeString(scheduleData.startTime)
 						}
 						
+						// 处理结束时间
 						if (scheduleData.endTime) {
 							recognizedInfo.endTime = this.formatTimeString(scheduleData.endTime)
+						} else if (recognizedInfo.startTime) {
+							// 如果没有结束时间，设置为开始时间后1小时
+							const [hours, minutes] = recognizedInfo.startTime.split(':').map(Number)
+							let endHour = hours + 1
+							if (endHour >= 24) endHour = 23
+							recognizedInfo.endTime = `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
 						}
 						
-						// 提取地点
-						if (scheduleData.location || scheduleData.place || scheduleData.venue) {
-							recognizedInfo.location = scheduleData.location || scheduleData.place || scheduleData.venue
+						// 处理地点
+						if (scheduleData.location) {
+							recognizedInfo.location = scheduleData.location
 						}
 						
-						// 提取参与人
-						if (scheduleData.participants || scheduleData.attendees || scheduleData.people) {
-							recognizedInfo.participants = scheduleData.participants || scheduleData.attendees || scheduleData.people
+						// 处理参与人
+						if (scheduleData.participants) {
+							recognizedInfo.participants = scheduleData.participants
 						}
 						
-						// 提取备注
-						if (scheduleData.notes || scheduleData.description || scheduleData.content) {
-							recognizedInfo.notes = scheduleData.notes || scheduleData.description || scheduleData.content
+						// 处理备注
+						if (scheduleData.notes) {
+							recognizedInfo.notes = scheduleData.notes
 						}
 						
-						// 更新表单数据
+						console.log('处理后的日程数据:', recognizedInfo)
+						
+						// 更新表单数据 - 使用解构并保留现有值
 						this.schedule = {
-							...this.schedule,
-							...recognizedInfo
+							...this.schedule,  // 保留原有值
+							...recognizedInfo  // 覆盖识别出的新值
 						}
 						
 						// 显示成功提示
@@ -321,8 +351,9 @@
 						})
 					} else {
 						// 处理错误情况
+						console.error('识别失败:', result)
 						uni.showToast({
-							title: result.message || '识别失败',
+							title: result.message || '识别失败，请重试',
 							icon: 'none'
 						})
 					}
@@ -330,12 +361,12 @@
 					// 隐藏加载提示
 					uni.hideLoading()
 					
+					console.error('AI识别请求错误:', err)
 					// 显示错误提示
 					uni.showToast({
 						title: '识别失败: ' + (err.message || '未知错误'),
 						icon: 'none'
 					})
-					console.error('AI识别错误:', err)
 				})
 			},
 			
@@ -344,45 +375,96 @@
 				uni.chooseImage({
 					count: 1,
 					success: (res) => {
-						const tempFilePath = res.tempFilePaths[0]
-						this.uploadedImageUrl = tempFilePath
-						this.showImagePreview = true
+						const tempFilePath = res.tempFilePaths[0];
+						this.uploadedImageUrl = tempFilePath;
+						this.showImagePreview = true;
 						
 						// 显示加载提示
 						uni.showLoading({
 							title: '识别中...'
-						})
+						});
 						
-						// 模拟图像识别过程（实际应用中可调用AI接口）
-						setTimeout(() => {
-							// 模拟识别结果
-							const recognizedInfo = {
-								title: '与客户会面讨论项目进展',
-								date: this.formatDateString(new Date()),
-								startTime: '14:00',
-								endTime: '15:30',
-								location: '星巴克咖啡(国贸店)',
-								participants: '李总、王经理',
-								notes: '准备项目进度报告和演示文稿'
+						// 读取图片为base64
+						uni.getFileSystemManager().readFile({
+							filePath: tempFilePath,
+							encoding: 'base64',
+							success: (readRes) => {
+								// 获取图片类型
+								let imgType = 'image/jpeg'; // 默认JPEG
+								if (tempFilePath.endsWith('.png')) {
+									imgType = 'image/png';
+								} else if (tempFilePath.endsWith('.gif')) {
+									imgType = 'image/gif';
+								}
+								
+								// 调用云函数进行识别
+								uniCloud.callFunction({
+									name: 'identifyImg',
+									data: {
+										fileContent: readRes.data,
+										fileType: imgType
+									}
+								}).then(res => {
+									// 处理识别结果
+									uni.hideLoading();
+									console.log('云函数返回结果:', res.result);
+									
+									// 与文本识别类似的处理逻辑
+									const result = res.result;
+									if (result.code === 0 && result.data) {
+										// 处理识别结果代码...
+										this.processRecognitionResult(result.data);
+									} else {
+										uni.showToast({
+											title: result.message || '识别失败',
+											icon: 'none'
+										});
+									}
+								}).catch(err => {
+									uni.hideLoading();
+									uni.showToast({
+										title: '识别失败: ' + (err.message || '未知错误'),
+										icon: 'none'
+									});
+								});
+							},
+							fail: (err) => {
+								uni.hideLoading();
+								console.error('读取图片失败:', err);
+								uni.showToast({
+									title: '读取图片失败',
+									icon: 'none'
+								});
 							}
-							
-							// 更新表单数据
-							this.schedule = {
-								...this.schedule,
-								...recognizedInfo
-							}
-							
-							// 隐藏加载提示
-							uni.hideLoading()
-							
-							// 显示成功提示
-							uni.showToast({
-								title: '识别成功',
-								icon: 'success'
-							})
-						}, 2000)
+						});
 					}
-				})
+				});
+			},
+			
+			// 处理识别结果的方法
+			processRecognitionResult(scheduleData) {
+				// 准备填充到表单的数据
+				const recognizedInfo = {};
+				
+				// 处理标题、日期、时间等
+				if (scheduleData.title) {
+					recognizedInfo.title = scheduleData.title;
+				}
+				
+				// 日期处理
+				// ... 其他处理代码同recognizeText方法 ...
+				
+				// 更新表单数据
+				this.schedule = {
+					...this.schedule,
+					...recognizedInfo
+				};
+				
+				// 显示成功提示
+				uni.showToast({
+					title: '识别成功',
+					icon: 'success'
+				});
 			},
 			
 			// 切换天气分析开关

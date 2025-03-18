@@ -1,0 +1,9 @@
+{
+  "name": "imgUploadAndAnalyze",
+  "dependencies": {
+    "axios": "^1.6.2"
+  },
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}
