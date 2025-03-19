@@ -384,61 +384,117 @@
 							title: '识别中...'
 						});
 						
-						// 读取图片为base64
-						uni.getFileSystemManager().readFile({
-							filePath: tempFilePath,
-							encoding: 'base64',
-							success: (readRes) => {
-								// 获取图片类型
-								let imgType = 'image/jpeg'; // 默认JPEG
-								if (tempFilePath.endsWith('.png')) {
-									imgType = 'image/png';
-								} else if (tempFilePath.endsWith('.gif')) {
-									imgType = 'image/gif';
+						// 根据平台调用不同的图片转base64方法
+						this.fileToBase64(tempFilePath, (base64Data) => {
+							// 获取图片类型
+							let imgType = 'image/jpeg'; // 默认JPEG
+							if (tempFilePath.toLowerCase().endsWith('.png')) {
+								imgType = 'image/png';
+							} else if (tempFilePath.toLowerCase().endsWith('.gif')) {
+								imgType = 'image/gif';
+							}
+							
+							// 从base64数据中去除前缀部分
+							let fileContent = base64Data;
+							if (base64Data.indexOf('base64,') >= 0) {
+								fileContent = base64Data.split('base64,')[1];
+							}
+							
+							// 调用云函数进行识别
+							uniCloud.callFunction({
+								name: 'identifyImg',
+								data: {
+									fileContent: fileContent,
+									fileType: imgType
 								}
+							}).then(res => {
+								// 处理识别结果
+								uni.hideLoading();
+								console.log('云函数返回结果:', res.result);
 								
-								// 调用云函数进行识别
-								uniCloud.callFunction({
-									name: 'identifyImg',
-									data: {
-										fileContent: readRes.data,
-										fileType: imgType
-									}
-								}).then(res => {
+								const result = res.result;
+								if (result.code === 0 && result.data) {
 									// 处理识别结果
-									uni.hideLoading();
-									console.log('云函数返回结果:', res.result);
-									
-									// 与文本识别类似的处理逻辑
-									const result = res.result;
-									if (result.code === 0 && result.data) {
-										// 处理识别结果代码...
-										this.processRecognitionResult(result.data);
-									} else {
-										uni.showToast({
-											title: result.message || '识别失败',
-											icon: 'none'
-										});
-									}
-								}).catch(err => {
-									uni.hideLoading();
+									this.processRecognitionResult(result.data);
+								} else {
 									uni.showToast({
-										title: '识别失败: ' + (err.message || '未知错误'),
+										title: result.message || '识别失败',
 										icon: 'none'
 									});
-								});
-							},
-							fail: (err) => {
+								}
+							}).catch(err => {
 								uni.hideLoading();
-								console.error('读取图片失败:', err);
+								console.error('AI识别请求错误:', err);
 								uni.showToast({
-									title: '读取图片失败',
+									title: '识别失败: ' + (err.message || '未知错误'),
 									icon: 'none'
 								});
-							}
+							});
 						});
 					}
 				});
+			},
+			
+			// 文件转Base64方法
+			fileToBase64(url, cb) {
+				// #ifdef MP-WEIXIN
+				uni.getFileSystemManager().readFile({
+					filePath: url, //选择图片返回的相对路径
+					encoding: 'base64', //编码格式
+					success: res => { //成功的回调
+						let base64 = 'data:image/jpeg;base64,' + res.data;
+						cb(base64);
+					},
+					fail: (e) => {
+						console.error("图片转换失败:", e);
+						uni.hideLoading();
+						uni.showToast({
+							title: '图片读取失败',
+							icon: 'none'
+						});
+					}
+				});
+				// #endif
+				
+				// #ifdef H5
+				uni.request({
+					url: url,
+					method: 'GET',
+					responseType: 'arraybuffer',
+					success: ress => {
+						let base64 = uni.arrayBufferToBase64(ress.data); //把arraybuffer转成base64
+						base64 = 'data:image/jpeg;base64,' + base64;
+						cb(base64);
+					},
+					fail: (e) => {
+						console.error("图片转换失败:", e);
+						uni.hideLoading();
+						uni.showToast({
+							title: '图片读取失败',
+							icon: 'none'
+						});
+					}
+				});
+				// #endif
+				
+				// #ifdef APP-PLUS
+				plus.io.resolveLocalFileSystemURL(url, (entry) => {
+					entry.file((file) => {
+						let fileReader = new plus.io.FileReader();
+						fileReader.onloadend = (evt) => {
+							cb(evt.target.result);
+						};
+						fileReader.readAsDataURL(file);
+					});
+				}, (e) => {
+					console.error("解析文件URL失败:", e);
+					uni.hideLoading();
+					uni.showToast({
+						title: '图片读取失败',
+						icon: 'none'
+					});
+				});
+				// #endif
 			},
 			
 			// 处理识别结果的方法
@@ -446,18 +502,85 @@
 				// 准备填充到表单的数据
 				const recognizedInfo = {};
 				
-				// 处理标题、日期、时间等
+				// 处理标题
 				if (scheduleData.title) {
 					recognizedInfo.title = scheduleData.title;
 				}
 				
 				// 日期处理
-				// ... 其他处理代码同recognizeText方法 ...
+				if (scheduleData.date) {
+					if (typeof scheduleData.date === 'string') {
+						if (scheduleData.date.includes('明天')) {
+							const tomorrow = new Date();
+							tomorrow.setDate(tomorrow.getDate() + 1);
+							recognizedInfo.date = this.formatDateString(tomorrow);
+						} else if (scheduleData.date.includes('后天')) {
+							const dayAfterTomorrow = new Date();
+							dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() +
+ 2);
+							recognizedInfo.date = this.formatDateString(dayAfterTomorrow);
+						} else if (scheduleData.date.includes('今天')) {
+							recognizedInfo.date = this.formatDateString(new Date());
+						} else {
+							try {
+								// 尝试处理YYYY-MM-DD格式
+								const dateMatch = scheduleData.date.match(/\d{4}-\d{1,2}-\d{1,2}/);
+								if (dateMatch) {
+									const dateObj = new Date(dateMatch[0]);
+									if (!isNaN(dateObj.getTime())) {
+										recognizedInfo.date = this.formatDateString(dateObj);
+									}
+								} else {
+									// 其他格式尝试直接解析
+									const dateObj = new Date(scheduleData.date);
+									if (!isNaN(dateObj.getTime())) {
+										recognizedInfo.date = this.formatDateString(dateObj);
+									}
+								}
+							} catch (e) {
+								console.error('日期解析错误:', e);
+							}
+						}
+					}
+				}
+				
+				// 处理开始时间
+				if (scheduleData.startTime) {
+					recognizedInfo.startTime = this.formatTimeString(scheduleData.startTime);
+				}
+				
+				// 处理结束时间
+				if (scheduleData.endTime) {
+					recognizedInfo.endTime = this.formatTimeString(scheduleData.endTime);
+				} else if (recognizedInfo.startTime) {
+					// 如果没有结束时间，设置为开始时间后1小时
+					const [hours, minutes] = recognizedInfo.startTime.split(':').map(Number);
+					let endHour = hours + 1;
+					if (endHour >= 24) endHour = 23;
+					recognizedInfo.endTime = `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+				}
+				
+				// 处理地点
+				if (scheduleData.location) {
+					recognizedInfo.location = scheduleData.location;
+				}
+				
+				// 处理参与人
+				if (scheduleData.participants) {
+					recognizedInfo.participants = scheduleData.participants;
+				}
+				
+				// 处理备注
+				if (scheduleData.notes) {
+					recognizedInfo.notes = scheduleData.notes;
+				}
+				
+				console.log('处理后的日程数据:', recognizedInfo);
 				
 				// 更新表单数据
 				this.schedule = {
-					...this.schedule,
-					...recognizedInfo
+					...this.schedule,  // 保留原有值
+					...recognizedInfo  // 覆盖识别出的新值
 				};
 				
 				// 显示成功提示
