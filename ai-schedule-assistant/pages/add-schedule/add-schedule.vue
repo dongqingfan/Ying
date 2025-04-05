@@ -5,15 +5,15 @@
 			<view class="status-bar">
 				<view style="visibility: hidden;">时间占位</view>
 				<view>
-					<text class="icon iconfont icon-wifi"></text>
-					<text class="icon iconfont icon-signal"></text>
-					<text class="icon iconfont icon-battery-full"></text>
+					<uni-icons type="wifi" size="18"></uni-icons>
+					<uni-icons type="signal" size="18"></uni-icons>
+					<uni-icons type="battery-full" size="18"></uni-icons>
 				</view>
 			</view>
 			
 			<view class="header">
 				<view class="back-button" @tap="goBack">
-					<text class="iconfont icon-back"></text>
+					<uni-icons type="back" size="24"></uni-icons>
 				</view>
 				<text style="font-size: 40rpx; font-weight: bold;">{{ isEditMode ? '编辑日程' : '添加日程' }}</text>
 				<text style="color: var(--primary-color); font-weight: 500;" @tap="saveSchedule">保存</text>
@@ -26,7 +26,7 @@
 				<view v-if="showImagePreview" style="margin-bottom: 30rpx;">
 					<image :src="uploadedImageUrl" style="max-width: 100%; max-height: 400rpx; border-radius: 16rpx;"></image>
 					<view style="margin-top: 20rpx; color: var(--success-color);">
-						<text class="iconfont icon-check-circle"></text> 识别成功，已自动填写日程信息
+						<uni-icons type="checkmarkempty" size="18" color="#52c41a"></uni-icons> 识别成功，已自动填写日程信息
 					</view>
 				</view>
 				
@@ -37,10 +37,10 @@
 				
 				<view style="display: flex; gap: 20rpx;">
 					<button class="btn" @tap="recognizeText" style="flex: 1;">
-						<text class="iconfont icon-magic"></text> 自动识别填写
+						<uni-icons type="star" size="18"></uni-icons> 自动识别填写
 					</button>
 					<button class="btn" @tap="chooseImage" style="flex: 1; background-color: var(--secondary-color); color: var(--primary-color);">
-						<text class="iconfont icon-image"></text> 上传图片识别
+						<uni-icons type="image" size="18"></uni-icons> 上传图片识别
 					</button>
 				</view>
 			</view>
@@ -87,16 +87,8 @@
 				<textarea v-model="schedule.notes" class="form-input textarea" style="height: 160rpx;" placeholder="输入备注信息"></textarea>
 			</view>
 			
-			<view class="form-group">
-				<label class="form-label">天气分析</label>
-				<view style="display: flex; align-items: center;">
-					<switch :checked="schedule.weatherAnalysis" @change="toggleWeatherAnalysis" color="var(--primary-color)" />
-					<text style="margin-left: 20rpx; font-size: 28rpx;">启用目的地天气分析</text>
-				</view>
-			</view>
-			
 			<button class="btn" @tap="saveSchedule" style="width: 100%; margin-top: 20rpx; margin-bottom: 120rpx;">
-				<text class="iconfont icon-save"></text> 保存日程
+				<uni-icons type="save" size="18" color="#FFFFFF"></uni-icons> 保存日程
 			</button>
 		</view>
 	</view>
@@ -139,7 +131,6 @@
 					location: '',
 					participants: '',
 					notes: '',
-					weatherAnalysis: true
 				}
 			}
 		},
@@ -179,52 +170,70 @@
 					uni.showToast({
 						title: '请输入日程标题',
 						icon: 'none'
-					})
-					return
+					});
+					return;
 				}
 				
 				if (!this.schedule.date) {
 					uni.showToast({
 						title: '请选择日期',
 						icon: 'none'
-					})
-					return
+					});
+					return;
 				}
 				
+				// 显示加载提示
+				uni.showLoading({
+					title: '保存中...'
+				});
+				
 				// 根据是否是编辑模式选择操作
+				let savePromise;
 				if (this.isEditMode) {
 					// 调用 vuex action 更新日程
-					this.updateExistingSchedule(this.schedule)
-					
-					// 提示保存成功
-					uni.showToast({
-						title: '日程更新成功',
-						icon: 'success',
-						duration: 2000,
-						success: () => {
-							// 延迟返回，让用户看到提示
-							setTimeout(() => {
-								uni.navigateBack()
-							}, 2000)
-						}
-					})
+					savePromise = this.updateExistingSchedule(this.schedule);
 				} else {
 					// 调用 vuex action 添加日程
-					this.addNewSchedule(this.schedule)
-					
-					// 提示保存成功
-					uni.showToast({
-						title: '日程保存成功',
-						icon: 'success',
-						duration: 2000,
-						success: () => {
-							// 延迟返回，让用户看到提示
-							setTimeout(() => {
-								uni.navigateBack()
-							}, 2000)
-						}
-					})
+					savePromise = this.addNewSchedule(this.schedule);
 				}
+				
+				// 处理保存结果
+				savePromise.then(result => {
+					// 隐藏加载提示
+					uni.hideLoading();
+					
+					if (result.success) {
+						// 提示保存成功
+						uni.showToast({
+							title: this.isEditMode ? '日程更新成功' : '日程保存成功',
+							icon: 'success',
+							duration: 2000,
+							success: () => {
+								// 延迟返回，让用户看到提示
+								setTimeout(() => {
+									uni.navigateBack();
+								}, 2000);
+							}
+						});
+					} else {
+						// 提示保存失败
+						uni.showToast({
+							title: result.message || '操作失败',
+							icon: 'none',
+							duration: 2000
+						});
+					}
+				}).catch(error => {
+					// 隐藏加载提示
+					uni.hideLoading();
+					
+					// 提示错误
+					uni.showToast({
+						title: error.message || '保存时发生错误',
+						icon: 'none',
+						duration: 2000
+					});
+				});
 			},
 			
 			// 自动识别文本
@@ -590,77 +599,73 @@
 				});
 			},
 			
-			// 切换天气分析开关
-			toggleWeatherAnalysis(e) {
-				this.schedule.weatherAnalysis = e.detail.value
-			},
-			
 			// 日期选择器变化处理
 			onDateChange(e) {
-				this.schedule.date = e.detail.value
+				this.schedule.date = e.detail.value;
+				console.log('日期选择器选择的日期:', e.detail.value, '格式:', typeof e.detail.value);
 			},
 			
 			// 开始时间选择器变化处理
 			onStartTimeChange(e) {
-				this.schedule.startTime = e.detail.value
+				this.schedule.startTime = e.detail.value;
 			},
 			
 			// 结束时间选择器变化处理
 			onEndTimeChange(e) {
-				this.schedule.endTime = e.detail.value
+				this.schedule.endTime = e.detail.value;
 			},
 			
 			// 格式化日期为字符串 (YYYY-MM-DD)
 			formatDateString(date) {
-				const year = date.getFullYear()
-				const month = (date.getMonth() + 1).toString().padStart(2, '0')
-				const day = date.getDate().toString().padStart(2, '0')
-				return `${year}-${month}-${day}`
+				const year = date.getFullYear();
+				const month = (date.getMonth() + 1).toString().padStart(2, '0');
+				const day = date.getDate().toString().padStart(2, '0');
+				return `${year}-${month}-${day}`;
 			},
 			
 			// 格式化日期显示 (YYYY年MM月DD日)
 			formatDate(dateString) {
-				if (!dateString) return '请选择日期'
+				if (!dateString) return '请选择日期';
 				
-				const date = new Date(dateString)
-				const year = date.getFullYear()
-				const month = date.getMonth() + 1
-				const day = date.getDate()
-				return `${year}年${month}月${day}日`
+				const date = new Date(dateString);
+				const year = date.getFullYear();
+				const month = date.getMonth() + 1;
+				const day = date.getDate();
+				return `${year}年${month}月${day}日`;
 			},
 			
 			// 添加时间格式化辅助方法
 			formatTimeString(timeStr) {
 				// 处理常见的时间格式，统一为HH:MM
-				if (!timeStr) return ''
+				if (!timeStr) return '';
 				
 				// 尝试提取小时和分钟
-				let hours, minutes
+				let hours, minutes;
 				
 				// 尝试匹配 "HH:MM" 或 "HH:MM:SS" 格式
-				const timeRegex = /(\d{1,2}):(\d{1,2})(?::\d{1,2})?/
-				const match = timeStr.match(timeRegex)
+				const timeRegex = /(\d{1,2}):(\d{1,2})(?::\d{1,2})?/;
+				const match = timeStr.match(timeRegex);
 				
 				if (match) {
-					hours = match[1].padStart(2, '0')
-					minutes = match[2].padStart(2, '0')
-					return `${hours}:${minutes}`
+					hours = match[1].padStart(2, '0');
+					minutes = match[2].padStart(2, '0');
+					return `${hours}:${minutes}`;
 				}
 				
 				// 尝试解析其他时间表示
 				try {
-					const date = new Date(timeStr)
+					const date = new Date(timeStr);
 					if (!isNaN(date.getTime())) {
-						hours = date.getHours().toString().padStart(2, '0')
-						minutes = date.getMinutes().toString().padStart(2, '0')
-						return `${hours}:${minutes}`
+						hours = date.getHours().toString().padStart(2, '0');
+						minutes = date.getMinutes().toString().padStart(2, '0');
+						return `${hours}:${minutes}`;
 					}
 				} catch (e) {
-					console.error('时间格式解析错误:', e)
+					console.error('时间格式解析错误:', e);
 				}
 				
 				// 如果无法解析，返回原始字符串
-				return timeStr
+				return timeStr;
 			}
 		}
 	}
@@ -756,7 +761,7 @@
 	
 	@font-face {
 		font-family: 'iconfont';
-		src: url('https://at.alicdn.com/t/font_2211295_iu6ju9j65x.ttf') format('truetype');
+		src: url('https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/fonts/fontawesome-webfont.ttf') format('truetype');
 	}
 	
 	.icon-back:before {
@@ -790,4 +795,4 @@
 	.icon-battery-full:before {
 		content: '\e60d';
 	}
-</style> 
+</style>

@@ -1,17 +1,86 @@
 <script>
+	import { mapActions } from 'vuex'
+	
 	export default {
 		onLaunch: function() {
 			console.log('App Launch')
-			// 初始化日程数据存储
-			if (!uni.getStorageSync('schedules')) {
-				uni.setStorageSync('schedules', [])
-			}
+			
+			// 初始化应用
+			this.initApp()
+			
+			// 初始化UniPush
+			// #ifdef APP-PLUS
+			this.initUniPush()
+			// #endif
 		},
 		onShow: function() {
 			console.log('App Show')
 		},
 		onHide: function() {
 			console.log('App Hide')
+		},
+		methods: {
+			...mapActions(['initApp']),
+			
+			// 初始化UniPush
+			initUniPush() {
+				// 监听点击推送消息事件
+				plus.push.addEventListener('click', (msg) => {
+					// 处理点击通知的逻辑
+					console.log('点击通知: ', JSON.stringify(msg))
+					
+					try {
+						// 解析payload获取scheduleId
+						const payload = msg.payload || "{}"
+						const payloadObj = JSON.parse(payload)
+						
+						if (payloadObj.type === 'schedule_reminder' && payloadObj.scheduleId) {
+							// 跳转到日程详情页
+							uni.navigateTo({
+								url: `/pages/schedule-detail/schedule-detail?id=${payloadObj.scheduleId}`
+							})
+						}
+					} catch (e) {
+						console.error('处理推送点击事件异常', e)
+					}
+				})
+				
+				// 监听接收推送消息事件
+				plus.push.addEventListener('receive', (msg) => {
+					// 处理接收通知的逻辑
+					console.log('收到通知: ', JSON.stringify(msg))
+				})
+				
+				// 获取客户端推送标识
+				uni.getPushClientId({
+					success: (res) => {
+						console.log('获取推送标识clientId成功：' + res.cid)
+						// 保存clientId到本地存储
+						uni.setStorageSync('push_client_id', res.cid)
+						console.log('设置 push_client_id:', res.cid)
+						// 上传clientId到云端
+						this.uploadPushClientId(res.cid)
+					},
+					fail: (err) => {
+						console.error('获取推送标识clientId失败：' + JSON.stringify(err))
+					}
+				})
+			},
+			
+			// 上传clientId到云端
+			uploadPushClientId(clientId) {
+				// 创建updateClientId云函数来保存clientId
+				uniCloud.callFunction({
+					name: 'updateClientId',
+					data: {
+						clientId: clientId
+					}
+				}).then(res => {
+					console.log('推送标识上传成功');
+				}).catch(err => {
+					console.error('推送标识上传失败', err);
+				})
+			}
 		}
 	}
 </script>
@@ -224,5 +293,34 @@
 	.tab.active {
 		color: var(--primary-color);
 		border-bottom: 4rpx solid var(--primary-color);
+	}
+	
+	/* 加载状态 */
+	.loading-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(255, 255, 255, 0.7);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		z-index: 999;
+	}
+	
+	.loading-content {
+		background-color: rgba(0, 0, 0, 0.6);
+		padding: 30rpx;
+		border-radius: 10rpx;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+	
+	.loading-text {
+		color: #ffffff;
+		margin-top: 20rpx;
+		font-size: 28rpx;
 	}
 </style>

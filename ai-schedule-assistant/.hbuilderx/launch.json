@@ -3,7 +3,7 @@
     "configurations" : [
         {
             "app-plus" : {
-                "launchtype" : "local"
+                "launchtype" : "remote"
             },
             "default" : {
                 "launchtype" : "local"
@@ -13,6 +13,10 @@
             },
             "provider" : "aliyun",
             "type" : "uniCloud"
+        },
+        {
+            "playground" : "standard",
+            "type" : "uni-app:app-android"
         }
     ]
 }

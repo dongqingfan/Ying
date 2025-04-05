@@ -43,34 +43,6 @@
 				<view class="detail-content">{{ schedule.notes }}</view>
 			</view>
 			
-			<!-- 天气信息 -->
-			<view class="detail-card" v-if="schedule.weatherAnalysis && weatherInfo && false">
-				<view class="detail-section-title">天气信息</view>
-				<view class="weather-info">
-					<view class="weather-main">
-						<text class="weather-icon" :class="getWeatherIconClass()"></text>
-						<view class="weather-temp">
-							<text>{{ weatherInfo.temperature }}°C</text>
-							<text class="weather-desc">{{ weatherInfo.description }}</text>
-						</view>
-					</view>
-					<view class="weather-details">
-						<view class="weather-item">
-							<text class="icon iconfont icon-wind"></text>
-							<text>{{ weatherInfo.wind }}</text>
-						</view>
-						<view class="weather-item">
-							<text class="icon iconfont icon-humidity"></text>
-							<text>湿度 {{ weatherInfo.humidity }}%</text>
-						</view>
-					</view>
-					<view v-if="weatherInfo.alert" class="alert" style="margin-top: 20rpx;">
-						<text class="icon iconfont icon-warning"></text>
-						<text>{{ weatherInfo.alert }}</text>
-					</view>
-				</view>
-			</view>
-			
 			<view class="button-group">
 				<button class="btn btn-primary" @tap="editSchedule" style="width: 48%;">
 					<text class="icon iconfont icon-edit"></text> 编辑日程
@@ -102,7 +74,6 @@
 		data() {
 			return {
 				scheduleId: '',
-				weatherInfo: null,
 				showDeletePopup: false
 			}
 		},
@@ -116,9 +87,7 @@
 		onLoad(options) {
 			if (options.id) {
 				this.scheduleId = options.id
-				
-				// 加载天气信息（实际应用中应该调用天气API）
-				this.loadWeatherInfo()
+				console.log('加载日程详情页，ID:', this.scheduleId)
 			} else {
 				uni.showToast({
 					title: '未找到日程信息',
@@ -128,6 +97,11 @@
 					uni.navigateBack()
 				}, 1500)
 			}
+		},
+		onShow() {
+			// 刷新数据以确保页面显示最新状态
+			this.$store.dispatch('loadSchedules')
+			console.log('日程详情页显示 - 刷新数据')
 		},
 		methods: {
 			...mapActions(['removeSchedule']),
@@ -196,45 +170,6 @@
 				const month = date.getMonth() + 1
 				const day = date.getDate()
 				return `${year}年${month}月${day}日`
-			},
-			
-			// 根据天气状况获取对应图标类名
-			getWeatherIconClass() {
-				if (!this.weatherInfo) return 'icon-sunny'
-				
-				const weatherType = this.weatherInfo.type
-				switch (weatherType) {
-					case 'sunny':
-						return 'icon-sunny'
-					case 'cloudy':
-						return 'icon-cloudy'
-					case 'rainy':
-						return 'icon-rainy'
-					case 'snowy':
-						return 'icon-snowy'
-					default:
-						return 'icon-sunny'
-				}
-			},
-			
-			// 加载天气信息（模拟数据，实际应用中应该调用天气API）
-			loadWeatherInfo() {
-				// 模拟加载延迟
-				setTimeout(() => {
-					// 随机生成天气信息（实际应用中应该根据日程地点调用天气API）
-					const weatherTypes = ['sunny', 'cloudy', 'rainy', 'snowy']
-					const weatherDescs = ['晴', '多云', '小雨', '小雪']
-					const randomIndex = Math.floor(Math.random() * weatherTypes.length)
-					
-					this.weatherInfo = {
-						type: weatherTypes[randomIndex],
-						description: weatherDescs[randomIndex],
-						temperature: Math.floor(Math.random() * 25) + 5, // 5-30度
-						humidity: Math.floor(Math.random() * 50) + 30, // 30-80%
-						wind: `${Math.floor(Math.random() * 5) + 1}级`,
-						alert: randomIndex > 1 ? '出行建议携带雨伞/防雪装备' : null // 下雨/雪时提醒
-					}
-				}, 500)
 			}
 		}
 	}
@@ -283,52 +218,11 @@
 		line-height: 1.5;
 	}
 	
-	.weather-info {
-		padding: 10rpx 0;
-	}
-	
-	.weather-main {
-		display: flex;
-		align-items: center;
-		margin-bottom: 20rpx;
-	}
-	
-	.weather-icon {
-		font-size: 80rpx;
-		margin-right: 30rpx;
-		color: var(--primary-color);
-	}
-	
-	.weather-temp {
-		display: flex;
-		flex-direction: column;
-	}
-	
-	.weather-desc {
-		font-size: 28rpx;
-		color: var(--light-text);
-		margin-top: 5rpx;
-	}
-	
-	.weather-details {
-		display: flex;
-		justify-content: space-between;
-	}
-	
-	.weather-item {
-		display: flex;
-		align-items: center;
-	}
-	
-	.weather-item .icon {
-		margin-right: 10rpx;
-		color: var(--primary-color);
-	}
-	
 	.button-group {
 		display: flex;
 		justify-content: space-between;
 		margin-top: 40rpx;
+		margin-bottom: 80rpx;
 	}
 	
 	.btn-primary {

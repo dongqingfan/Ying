@@ -3,15 +3,15 @@
 		<view class="status-bar">
 			<view style="visibility: hidden;">时间占位</view>
 			<view>
-				<text class="icon iconfont icon-wifi"></text>
-				<text class="icon iconfont icon-signal"></text>
-				<text class="icon iconfont icon-battery-full"></text>
+				<uni-icons type="wifi" size="18"></uni-icons>
+				<uni-icons type="signal" size="18"></uni-icons>
+				<uni-icons type="battery-full" size="18"></uni-icons>
 			</view>
 		</view>
 		
 		<view class="header">
 			<text style="font-size: 40rpx; font-weight: bold;display: none;">{{ currentCity }}</text>
-			<text class="icon iconfont icon-search" style="font-size: 40rpx;"></text>
+			<uni-icons type="search" size="22" style="font-size: 40rpx;"></uni-icons>
 		</view>
 		
 		<!-- 今日/本周切换标签 -->
@@ -27,15 +27,15 @@
 					<text>今日暂无日程安排</text>
 				</view>
 				<view v-else>
-					<view v-for="(schedule, index) in todaySchedules" :key="index" class="schedule-item" @tap="goToDetail(schedule.id)">
+					<view v-for="(schedule, index) in todaySchedules" :key="index" class="schedule-item" @tap="goToDetail(schedule._id)">
 						<view class="schedule-time">{{ formatTime(schedule.startTime) }}</view>
 						<view class="schedule-content">
 							<view class="schedule-title">{{ schedule.title }}</view>
 							<view class="schedule-location" v-if="schedule.location">
-								<text class="icon iconfont icon-location"></text> {{ schedule.location }}
+								<uni-icons type="location" size="16"></uni-icons> {{ schedule.location }}
 							</view>
 							<view class="alert" v-if="schedule.weatherAlert">
-								<text class="icon iconfont icon-warning"></text>
+								<uni-icons type="warn" size="16"></uni-icons>
 								<text>{{ schedule.weatherAlert }}</text>
 							</view>
 						</view>
@@ -49,14 +49,14 @@
 					<text>本周暂无日程安排</text>
 				</view>
 				<view v-else>
-					<view v-for="(schedule, index) in weekSchedules" :key="index" class="schedule-item" @tap="goToDetail(schedule.id)">
+					<view v-for="(schedule, index) in weekSchedules" :key="index" class="schedule-item" @tap="goToDetail(schedule._id)">
 						<view class="schedule-time">
 							{{ formatWeekDay(schedule.date) }}<br>{{ formatDate(schedule.date) }}
 						</view>
 						<view class="schedule-content">
 							<view class="schedule-title">{{ schedule.title }}</view>
 							<view class="schedule-location" v-if="schedule.location">
-								<text class="icon iconfont icon-location"></text> {{ schedule.location }}
+								<uni-icons type="location" size="16"></uni-icons> {{ schedule.location }}
 							</view>
 						</view>
 					</view>
@@ -66,7 +66,7 @@
 		
 		<!-- 添加日程按钮 -->
 		<view class="fab-btn" @tap="goToAddSchedule">
-			<text class="icon iconfont icon-add"></text>
+			<uni-icons type="plusempty" size="28" color="#FFFFFF"></uni-icons>
 		</view>
 	</view>
 </template>
@@ -86,8 +86,9 @@
 			...mapGetters(['todaySchedules', 'weekSchedules'])
 		},
 		onLoad() {
-			// 从本地存储加载日程数据
+			// 从云加载日程数据
 			this.loadSchedules()
+			console.log('首页加载 - 调用loadSchedules')
 			
 			// 获取当前城市
 			this.getCurrentCity()
@@ -95,6 +96,10 @@
 		onShow() {
 			// 页面显示时刷新数据
 			this.loadSchedules()
+			console.log('首页显示 - 调用loadSchedules')
+			console.log('当前日程数据:', this.$store.state.schedules)
+			console.log('今日日程数据:', this.todaySchedules)
+			console.log('本周日程数据:', this.weekSchedules)
 			
 			// 每次显示页面时刷新城市信息
 			this.getCurrentCity()
@@ -242,7 +247,7 @@
 	/* 引入字体图标 (可替换为实际的iconfont) */
 	@font-face {
 		font-family: 'iconfont';
-		src: url('https://at.alicdn.com/t/font_2211295_iu6ju9j65x.ttf') format('truetype');
+		src: url('https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/fonts/fontawesome-webfont.ttf') format('truetype');
 	}
 	
 	.icon {
